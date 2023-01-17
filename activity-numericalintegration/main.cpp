@@ -41,8 +41,6 @@ int main (int argc, char* argv[]) {
   int intensity;
   sscanf(argv[5], "%d", &intensity);
 
-  std::cout << functionid << a << b << n << intensity << std::endl;
-
   // Rectangle step size (b - a) / n
   float step = (b - a) / n;
 
