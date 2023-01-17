@@ -50,7 +50,7 @@ int main (int argc, char* argv[]) {
   switch (functionid)
   {
   case 1:
-    for (int i = 0; i < n-1; i++) {
+    for (int i = 0; i < n; i++) {
 
       // Function input x
       float x = a + (i + 0.5f) * step;
@@ -59,7 +59,7 @@ int main (int argc, char* argv[]) {
     }
     break;
   case 2:
-    for (int i = 0; i < n-1; i++) {
+    for (int i = 0; i < n; i++) {
 
       // Function input x
       float x = a + (i + 0.5f) * step;
@@ -68,7 +68,7 @@ int main (int argc, char* argv[]) {
     }
     break;
   case 3:
-    for (int i = 0; i < n-1; i++) {
+    for (int i = 0; i < n; i++) {
 
       // Function input x
       float x = a + (i + 0.5f) * step;
@@ -77,7 +77,7 @@ int main (int argc, char* argv[]) {
     }
     break;
   case 4:
-    for (int i = 0; i < n-1; i++) {
+    for (int i = 0; i < n; i++) {
 
       // Function input x
       float x = a + (i + 0.5f) * step;
