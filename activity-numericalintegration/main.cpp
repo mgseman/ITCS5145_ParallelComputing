@@ -97,7 +97,7 @@ int main (int argc, char* argv[]) {
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
   //Record time taken
-  int time = std::chrono::duration_cast<std::chrono::seconds>(end - begin).count();
+  float time = std::chrono::duration<float>(end - begin).count();
 
   // Output answer on stdout
   std::cout << answer << std::endl;
