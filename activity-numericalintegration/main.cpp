@@ -35,11 +35,13 @@ int main (int argc, char* argv[]) {
 
   // argv[4] is int64 n (# of points)
   long long int n; 
-  sscanf(argv[5], "%lld", &n); // %lld reads 64 bit int
+  sscanf(argv[4], "%lld", &n); // %lld reads 64 bit int
   
   // argv[5] is int intensity
   int intensity;
   sscanf(argv[5], "%d", &intensity);
+
+  std::cout << functionid << a << b << n << intensity << std::endl;
 
   // Rectangle step size (b - a) / n
   float step = (b - a) / n;
@@ -100,10 +102,10 @@ int main (int argc, char* argv[]) {
   int time = std::chrono::duration_cast<std::chrono::seconds>(end - begin).count();
 
   // Output answer on stdout
-  std::cout << answer;
+  std::cout << answer << std::endl;
 
   // Output time on stderr
-  std::cerr << time;
+  std::cerr << time << std::endl;
 
   if (argc < 6) {
     std::cerr<<"usage: "<<argv[0]<<" <functionid> <a> <b> <n> <intensity>"<<std::endl;
