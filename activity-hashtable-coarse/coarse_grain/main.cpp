@@ -49,7 +49,6 @@ std::vector<std::vector<std::string>> tokenizeLyrics(const std::vector<std::stri
 
 void cntWords(Dictionary<std::string, int> &dict, std::vector<std::string> filecontent, std::mutex &mut) {
   
-  // Copy of dictionary is created?
   for (auto & w : filecontent) {
       std::lock_guard <std::mutex> lg(mut); // Lock guard guarentees RAII - Read Access Is Initialization
       int count = dict.get(w);
@@ -124,6 +123,8 @@ int main(int argc, char **argv)
 
   // Do not touch this, need for test cases
   std::cout << ht.get(testWord) << std::endl;
+
+  std::cerr << time_elapsed.count() << "\n";
 
   return 0;
 }
