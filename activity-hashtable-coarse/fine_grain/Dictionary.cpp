@@ -58,6 +58,8 @@ public:
    */
   virtual void set(const K& key, const V& value) = 0;
 
+  virtual void counter(const K& key) = 0;
+
   /**
    * deletes the node at given key
    * @param key key of node to be deleted

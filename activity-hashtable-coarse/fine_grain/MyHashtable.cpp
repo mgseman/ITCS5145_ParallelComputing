@@ -5,6 +5,9 @@
 #include <functional>
 #include <iostream>
 #include <vector>
+#include <shared_mutex>
+#include <mutex>
+#include <condition_variable>
 
 template<class K, class V>
 struct Node {
@@ -29,6 +32,10 @@ protected:
   int count;
   double loadFactor;
   std::vector<Node<K,V>*> table;
+  
+  mutable std::vector<std::shared_mutex> rwlocks;
+  mutable std::shared_mutex mut;
+  std::condition_variable_any rwait;
 
   struct hashtable_iter : public dict_iter {
     MyHashtable& mt;
@@ -83,6 +90,7 @@ protected:
     //and stealing its data at the end. This causes more memory
     //allocation than are really necessary as we could reuse all the
     //node objects without having a create a single new one.
+    std::scoped_lock<std::shared_mutex> lock(mut);
     auto temp_table = MyHashtable(capacity, this->loadFactor);
 
     for (auto node : this->table) {
@@ -109,11 +117,19 @@ public:
     index = index < 0 ? index + this->capacity : index;
     const Node<K,V>* node = this->table[index];
 
+    std::shared_lock<std::shared_mutex> shared_lock(mut);
+    std::shared_lock<std::shared_mutex> read_lock(rwlocks[index]);
+    //rwlocks[index].lock_shared();
+
     while (node != nullptr) {
-      if (node->key == key)
+      if (node->key == key) {
+        //rwlocks[index].unlock_shared();
 	      return node->value;
+      }
       node = node->next;
     }
+
+    //rwlocks[index].unlock_shared();
     return V();
   }
 
@@ -126,10 +142,15 @@ public:
     std::size_t index = std::hash<K>{}(key) % this->capacity;
     index = index < 0 ? index + this->capacity : index;
     Node<K,V>* node = this->table[index];
-    
+
+    std::shared_lock<std::shared_mutex> shared_lock(mut);
+    std::scoped_lock<std::shared_mutex> write_lock(rwlocks[index]);
+    //rwlocks[index].lock();
+
     while (node != nullptr) {
       if (node->key == key) {
 	      node->value = value;
+        //rwlocks[index].unlock();
 	      return;
       }
       node = node->next;
@@ -137,6 +158,38 @@ public:
 
     //if we get here, then the key has not been found
     node = new Node<K,V>(key, value);
+    node->next = this->table[index];
+    this->table[index] = node;
+    this->count++;
+    if (((double)this->count)/this->capacity > this->loadFactor) {
+      this->resize(this->capacity * 2);
+    }
+
+    //rwlocks[index].unlock();
+
+  }
+  
+  virtual void counter(const K& key)
+  {
+    std::size_t index = std::hash<K>{}(key) % this->capacity;
+    index = index < 0 ? index + this->capacity : index;
+    Node<K,V>* node = this->table[index];
+
+    std::shared_lock<std::shared_mutex> shared_lock(mut);
+    std::scoped_lock<std::shared_mutex> count_lock(rwlocks[index]);
+    //rwlocks[index].lock();
+
+    while (node != nullptr) {
+      if (node->key == key) {
+	      node->value += 1;
+        //rwlocks[index].unlock();
+	      return;
+      }
+      node = node->next;
+    }
+
+    //if we get here, then the key has not been found
+    node = new Node<K,V>(key, 1);
     node->next = this->table[index];
     this->table[index] = node;
     this->count++;
@@ -154,8 +207,10 @@ public:
 
   MyHashtable(): MyHashtable(100000, 10.0) {}
   MyHashtable(int capacity): MyHashtable(capacity, 10.0) {}
-  MyHashtable(int capacity, double loadFactor): capacity(capacity), count(0), loadFactor(loadFactor) {
-    
+  MyHashtable(int capacity, double loadFactor): capacity(capacity), count(0), loadFactor(loadFactor) 
+  {
+    std::vector<std::shared_mutex> temp(capacity);
+    this->rwlocks.swap(temp);
     this->table.resize(capacity, nullptr);
   }
 
