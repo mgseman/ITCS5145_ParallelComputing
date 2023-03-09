@@ -36,6 +36,7 @@ protected:
   mutable std::vector<std::shared_mutex> rwlocks;
   mutable std::shared_mutex mut;
   std::condition_variable_any rwait;
+  int nMuts = 256;
 
   struct hashtable_iter : public dict_iter {
     MyHashtable& mt;
@@ -117,8 +118,10 @@ public:
     index = index < 0 ? index + this->capacity : index;
     const Node<K,V>* node = this->table[index];
 
+    int mutidx = index % nMuts;
+
     std::shared_lock<std::shared_mutex> shared_lock(mut);
-    std::shared_lock<std::shared_mutex> read_lock(rwlocks[index]);
+    std::shared_lock<std::shared_mutex> read_lock(rwlocks[mutidx]);
     //rwlocks[index].lock_shared();
 
     while (node != nullptr) {
@@ -143,8 +146,10 @@ public:
     index = index < 0 ? index + this->capacity : index;
     Node<K,V>* node = this->table[index];
 
+    int mutidx = index % nMuts;
+
     std::shared_lock<std::shared_mutex> shared_lock(mut);
-    std::scoped_lock<std::shared_mutex> write_lock(rwlocks[index]);
+    std::scoped_lock<std::shared_mutex> write_lock(rwlocks[mutidx]);
     //rwlocks[index].lock();
 
     while (node != nullptr) {
@@ -169,14 +174,17 @@ public:
 
   }
   
+  //Counts words
   virtual void counter(const K& key)
   {
     std::size_t index = std::hash<K>{}(key) % this->capacity;
     index = index < 0 ? index + this->capacity : index;
     Node<K,V>* node = this->table[index];
 
+    int mutidx = index % nMuts;
+
     std::shared_lock<std::shared_mutex> shared_lock(mut);
-    std::scoped_lock<std::shared_mutex> count_lock(rwlocks[index]);
+    std::scoped_lock<std::shared_mutex> count_lock(rwlocks[mutidx]);
     //rwlocks[index].lock();
 
     while (node != nullptr) {
@@ -188,7 +196,7 @@ public:
       node = node->next;
     }
 
-    //if we get here, then the key has not been found
+    // If key for word not found assign node value to 1
     node = new Node<K,V>(key, 1);
     node->next = this->table[index];
     this->table[index] = node;
@@ -209,7 +217,7 @@ public:
   MyHashtable(int capacity): MyHashtable(capacity, 10.0) {}
   MyHashtable(int capacity, double loadFactor): capacity(capacity), count(0), loadFactor(loadFactor) 
   {
-    std::vector<std::shared_mutex> temp(capacity);
+    std::vector<std::shared_mutex> temp(nMuts);
     this->rwlocks.swap(temp);
     this->table.resize(capacity, nullptr);
   }
