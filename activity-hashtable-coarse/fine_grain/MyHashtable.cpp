@@ -183,7 +183,6 @@ public:
 
     int mutidx = index % nMuts;
 
-    std::shared_lock<std::shared_mutex> shared_lock(mut);
     std::scoped_lock<std::shared_mutex> count_lock(rwlocks[mutidx]);
     //rwlocks[index].lock();
 
@@ -201,9 +200,9 @@ public:
     node->next = this->table[index];
     this->table[index] = node;
     this->count++;
-    if (((double)this->count)/this->capacity > this->loadFactor) {
-      this->resize(this->capacity * 2);
-    }
+    //if (((double)this->count)/this->capacity > this->loadFactor) {
+    //  this->resize(this->capacity * 2);
+    //}
   }
 
   /**
@@ -213,7 +212,7 @@ public:
   virtual void deleteKey(const K& key) {
   }
 
-  MyHashtable(): MyHashtable(100000, 10.0) {}
+  MyHashtable(): MyHashtable(150000, 10.0) {}
   MyHashtable(int capacity): MyHashtable(capacity, 10.0) {}
   MyHashtable(int capacity, double loadFactor): capacity(capacity), count(0), loadFactor(loadFactor) 
   {
