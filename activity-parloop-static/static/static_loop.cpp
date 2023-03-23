@@ -1,9 +1,11 @@
 #ifndef __STATIC_LOOP_H
 #define __STATIC_LOOP_H
 
+#include <iostream>
 #include <functional>
 #include <thread>
 #include <mutex>
+#include <cmath>
 
 class StaticLoop {
 private:
@@ -23,7 +25,7 @@ private:
     
     before(loc_tls);
 
-    for(size_t i = beg; i < end; i+=increment)
+    for(int i = beg; i < end; i+=increment)
     {
       f(i, loc_tls);
     }
@@ -76,14 +78,21 @@ public:
 	       std::function<void(TLS&)> after
 	       ) 
   {
-    size_t batch_size = end / nbthreads;
+    size_t batch_size = (end - beg) / nbthreads;
     std::vector<std::thread> m_threads;
     std::mutex mut;
     
-    for(size_t i = 0; i < nbthreads; i++) {
+    for(int i = 0; i < nbthreads; i++) {
       size_t start = i * batch_size;
       size_t loc_beg = beg + start;
-      size_t loc_end = beg + start + batch_size;
+      size_t loc_end;
+
+      if (i == nbthreads - 1) {
+        loc_end = end;
+      }
+      else {
+        loc_end = loc_beg + batch_size;
+      }
       
       std::thread m_thread(thdfunc<TLS>, loc_beg, loc_end, increment, before, f, after, std::ref(mut));
       m_threads.push_back(std::move(m_thread));
