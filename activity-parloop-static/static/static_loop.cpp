@@ -2,16 +2,42 @@
 #define __STATIC_LOOP_H
 
 #include <functional>
+#include <thread>
+#include <mutex>
 
 class StaticLoop {
 private:
   // @brief you will want to have class member to store the number of threads
   // add a public setter function for this member.
 
+  size_t nbthreads;
+  
+  template<typename TLS>
+  static void thdfunc(size_t beg, size_t end, size_t increment,
+          std::function<void(TLS&)> before,
+	        std::function<void(int, TLS&)> f,
+	       std::function<void(TLS&)> after, 
+         std::mutex &mut)
+  {
+    TLS loc_tls = 0;
+    
+    before(loc_tls);
+
+    for(size_t i = beg; i < end; i+=increment)
+    {
+      f(i, loc_tls);
+    }
+    
+    std::lock_guard<std::mutex> lg(mut);
+    after(loc_tls);
+  }
+
 public:
   // @breif write setters here.
 
-
+  void setNumThreads(int nthds) {
+    nbthreads = nthds;
+  }
 
   /// @brief execute the function f multiple times with different
   /// parameters possibly in parallel
@@ -48,13 +74,26 @@ public:
 	       std::function<void(TLS&)> before,
 	       std::function<void(int, TLS&)> f,
 	       std::function<void(TLS&)> after
-	       ) {
-    TLS tls;
-    before(tls);    
-    for (size_t i=beg; i<end; i+= increment) {
-      f(i, tls);
+	       ) 
+  {
+    size_t batch_size = end / nbthreads;
+    std::vector<std::thread> m_threads;
+    std::mutex mut;
+    
+    for(size_t i = 0; i < nbthreads; i++) {
+      size_t start = i * batch_size;
+      size_t loc_beg = beg + start;
+      size_t loc_end = beg + start + batch_size;
+      
+      std::thread m_thread(thdfunc<TLS>, loc_beg, loc_end, increment, before, f, after, std::ref(mut));
+      m_threads.push_back(std::move(m_thread));
+
+      //m_threads.emplace_back([&](){thdfunc<TLS>(loc_beg, loc_end, increment, before, f, after, std::ref(mut));});
     }
-    after(tls);
+
+    for (auto & t : m_threads) {
+      t.join();
+    }
   }
   
 };
