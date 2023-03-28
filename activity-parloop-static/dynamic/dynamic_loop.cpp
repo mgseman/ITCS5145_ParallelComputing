@@ -48,11 +48,11 @@ public:
       loc_beg = beg;
       if (loc_beg + granularity < end){
         loc_end = loc_beg + granularity;
-        beg = loc_beg + granularity;
+        beg = loc_end;
       }
       else {
         loc_end = end; 
-        beg = end;       
+        beg = loc_end;       
       }
       mut.unlock();
 
