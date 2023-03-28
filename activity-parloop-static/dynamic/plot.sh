@@ -175,7 +175,7 @@ do
 	for gran in ${GRANS};
 	do
 
-            GCMDSPPN="${GCMDSPPN} '${RESULTDIR}/speedupt_dynamic_${n}_${intensity}_${gran}' u 1:(\$2/\$3) t 'parloop dynamic' lc ${c} lw 3," 
+            GCMDSPPN="${GCMDSPPN} '${RESULTDIR}/speedupt_dynamic_${n}_${intensity}_${gran}' u 1:(\$2/\$3) t '${gran}' lc ${c} lw 3," 
 	    c=`expr $c + 1`
 #                     '${RESULTDIR}/speedupt_dynamic_${n}_${intensity}_thread_${gran}' u 1:(\$2/\$3) lc 3 t 'thread'; "
 	done
