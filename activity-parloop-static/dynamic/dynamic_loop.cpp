@@ -34,34 +34,37 @@ public:
 	       std::function<void(TLS&)> after, 
          std::mutex &mut,
          size_t granularity)
-  {
+{
     TLS loc_tls = 0;
     
     before(loc_tls);
 
-    size_t loc_beg; 
-    size_t loc_end;
+    size_t loc_beg = 0; 
+    size_t loc_end = end;
 
     while (beg < end)
     {
       mut.lock();
       loc_beg = beg;
-      if (beg + granularity < end){
-        loc_end = beg + granularity;
+      if (loc_beg + granularity < end){
+        loc_end = loc_beg + granularity;
+        beg = loc_beg + granularity;
       }
       else {
-        loc_end = end;
+        loc_end = end; 
+        beg = end;       
       }
-      beg = beg + granularity;
       mut.unlock();
+
       for(size_t i = loc_beg; i < loc_end; i+=increment)
       {
         f(i, loc_tls);
       }
     }
     
-    std::lock_guard<std::mutex> lg(mut);
+    mut.lock();
     after(loc_tls);
+    mut.unlock();
   }
 
   /// @brief execute the function f multiple times with different
@@ -99,13 +102,13 @@ public:
 	       std::function<void(TLS&)> before,
 	       std::function<void(int, TLS&)> f,
 	       std::function<void(TLS&)> after
-	       ) {
-    size_t batch_size = end / nthreads;
+	       ) 
+  {
     std::vector<std::thread> m_threads;
     std::mutex mut;
+    size_t thd_start = beg;
     
     for(size_t i = 0; i < nthreads; i++) {
-      size_t thd_start = beg;
 
       std::thread m_thread(thdfunc<TLS>, std::ref(thd_start), end, increment, before, f, after, std::ref(mut), granularity);
       m_threads.push_back(std::move(m_thread));
