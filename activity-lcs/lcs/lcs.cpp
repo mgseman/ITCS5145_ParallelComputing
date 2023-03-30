@@ -35,9 +35,9 @@ int LCS(char* X, int m, char* Y, int n, int num_threads) {
 
   for (int i=1; i<=m+n; ++i) {
     ol.parfor<int**>(1, i+1, 1, 
-                  [C](int**& tls){
+                  [&C](int**& tls){
                     tls = C;
-                  }, [X, m, Y, n, i](int b, int**& tls){
+                  }, [&X, &m, &Y, &n, &i](int b, int**& tls){
                     int a = i - b;
                     if (a <= m && a > 0 && b <= n && b > 0)
                     {
@@ -48,7 +48,7 @@ int LCS(char* X, int m, char* Y, int n, int num_threads) {
                       }
                     }
                   
-                  }, [&result, m, n](int**& tls){
+                  }, [&result, &m, &n](int**& tls){
                     result += tls[m][n];
                   });
   }
