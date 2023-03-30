@@ -31,8 +31,11 @@ int LCS(char* X, int m, char* Y, int n, int num_threads) {
     C[0][j] = 0;
   }
 
-  int result = 0;
+  ol.setNbThread(num_threads);
+  ol.setGranularity((n+m)/200);
 
+  int result = 0;
+  
   for (int i=1; i<=m+n; ++i) {
     ol.parfor<int**>(1, i+1, 1, 
                   [&C](int**& tls){
@@ -49,7 +52,7 @@ int LCS(char* X, int m, char* Y, int n, int num_threads) {
                     }
                   
                   }, [&result, &m, &n](int**& tls){
-                    result += tls[m][n];
+                    result = tls[m][n];
                   });
   }
 
