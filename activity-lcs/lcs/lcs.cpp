@@ -20,8 +20,6 @@ extern "C" {
 
 int LCS(char* X, int m, char* Y, int n, int num_threads) {
   
-  OmpLoop ol;
-
   int** C = new int*[m+1];
   for (int i=0; i<=m; ++i) {
     C[i] = new int[n+1];
@@ -31,30 +29,29 @@ int LCS(char* X, int m, char* Y, int n, int num_threads) {
     C[0][j] = 0;
   }
 
+  const int granularity = std::max(((n+m)/200), 1);
+  OmpLoop ol;
   ol.setNbThread(num_threads);
-  ol.setGranularity((n+m)/200);
+  ol.setGranularity(granularity);
 
   int result = 0;
   
   for (int i=1; i<=m+n; ++i) {
-    ol.parfor<int**>(1, i+1, 1, 
-                  [&C](int**& tls){
-                    tls = C;
-                  }, [&X, &m, &Y, &n, &i](int b, int**& tls){
+    ol.parfor(1, i+1, 1, 
+                    [&X, &m, &Y, &n, &i, &C](int b){
                     int a = i - b;
                     if (a <= m && a > 0 && b <= n && b > 0)
                     {
                       if (X[a-1] == Y[b-1]) {
-                        tls[a][b] = tls[a-1][b-1] + 1; 
+                        C[a][b] = C[a-1][b-1] + 1; 
                       } else {
-                        tls[a][b] = std::max(tls[a-1][b], tls[a][b-1]);
+                        C[a][b] = std::max(C[a-1][b], C[a][b-1]);
                       }
                     }
-                  
-                  }, [&result, &m, &n](int**& tls){
-                    result = tls[m][n];
                   });
   }
+
+  result = C[m][n];
 
   for (int i=0; i<=m; ++i) { 
     delete[] C[i];
@@ -79,7 +76,6 @@ int main (int argc, char* argv[]) {
   char *Y = new char[n];
   generateLCS(X, m, Y, n);
 
-  
   //insert LCS code here.
 
   std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();

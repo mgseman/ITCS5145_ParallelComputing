@@ -25,6 +25,18 @@ public:
     granularity = g;
   }
 
+  void parfor (size_t beg, size_t end, size_t increment,
+               std::function<void(int)> f
+               ) {
+#pragma omp parallel num_threads(nbthread)
+    {
+#pragma omp for schedule(dynamic, granularity) 
+      for (size_t i=beg; i<end; i+= increment) {
+	      f(i);
+      }
+    }
+  }
+
   template<typename TLS>
   void parfor (size_t beg, size_t end, size_t increment,
                std::function<void(TLS&)> before,
@@ -38,7 +50,7 @@ public:
       
 #pragma omp for schedule(dynamic, granularity) 
       for (size_t i=beg; i<end; i+= increment) {
-	f(i, tls);
+	      f(i, tls);
       }
 #pragma omp critical
       after(tls);
