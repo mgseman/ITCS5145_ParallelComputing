@@ -43,7 +43,7 @@ int main (int argc, char* argv[]) {
 
   OmpLoop ol;
   ol.setNbThread(nthds);
-  //ol.setGranularity(granularity);
+  ol.setGranularity(granularity);
 
   for (int sl=0; sl < 2*n - 2; ++sl) {
     int z = (sl < n) ? 0 : 2 * (sl - n + 1);
