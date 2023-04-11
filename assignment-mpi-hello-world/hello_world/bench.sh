@@ -1,0 +1,6 @@
+#!/bin/bash
+
+
+
+
+mpiexec  ./hello
