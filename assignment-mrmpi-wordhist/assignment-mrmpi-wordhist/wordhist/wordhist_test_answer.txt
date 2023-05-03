@@ -1,0 +1,5 @@
+test_fox.txt, 1, 9
+test_rain.txt, 1, 7
+test_rain.txt, 2, 1
+test_both.txt, 1, 15
+test_both.txt, 3, 1
