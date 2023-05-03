@@ -1,0 +1,15 @@
+*.o
+*.sh.*
+
+mrmpi/
+texts/
+
+wordfreq/wordfreq.o
+wordfreq/wordfreq
+wordfreq/wordfreq_seq.o
+wordfreq/wordfreq_seq
+
+knn/knn
+knn/knn.o
+knn/knn_mrmpi
+knn/knn_mrmpi.o
