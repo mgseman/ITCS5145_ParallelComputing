@@ -147,8 +147,6 @@ int main(int argc, char* argv[]) {
 
   long row = rank%lround(sqrt(size));
   long col = rank/lround(sqrt(size));
-
-  std::cout<<"row: "<<row<<" col: "<<col<<std::endl;
   
   // generate 2D array
   //generate2DHeat(sub_heat[0], N, rank, P);
@@ -163,7 +161,7 @@ int main(int argc, char* argv[]) {
 	  
   }
 
-  showHeat(sub_heat[0], sub_N, sub_N);
+  //showHeat(sub_heat[0], sub_N, sub_N);
 
 
   // write code here
@@ -226,13 +224,13 @@ int main(int argc, char* argv[]) {
       }
     }
     else { // Odd columns
-      if (r_rank < size) { // Right neighbor exists
-        MPI_Recv(&(right_bnd_recv[0]), (sub_N), MPI_DOUBLE, r_rank, 112, MPI_COMM_WORLD, &s);
-        MPI_Send(&(right_bnd_send[0]), (sub_N), MPI_DOUBLE, r_rank, 113, MPI_COMM_WORLD);
-      }
       if (l_rank >= 0) { // Left neighbor exists
         MPI_Recv(&(left_bnd_recv[0]), (sub_N), MPI_DOUBLE, l_rank, 111, MPI_COMM_WORLD, &s);
         MPI_Send(&(left_bnd_send[0]), (sub_N), MPI_DOUBLE, l_rank, 114, MPI_COMM_WORLD);
+      }
+      if (r_rank < size) { // Right neighbor exists
+        MPI_Recv(&(right_bnd_recv[0]), (sub_N), MPI_DOUBLE, r_rank, 112, MPI_COMM_WORLD, &s);
+        MPI_Send(&(right_bnd_send[0]), (sub_N), MPI_DOUBLE, r_rank, 113, MPI_COMM_WORLD);
       }
     }
 
@@ -248,13 +246,13 @@ int main(int argc, char* argv[]) {
       }
     }
     else { // Odd rows
+      if (b_rank_exist) { // Lower neighbor exists
+        MPI_Recv(&(lower_bnd_recv[0]), (sub_N), MPI_DOUBLE, b_rank, 115, MPI_COMM_WORLD, &s);
+        MPI_Send(&(lower_bnd_send[0]), (sub_N), MPI_DOUBLE, b_rank, 118, MPI_COMM_WORLD);
+      }
       if (u_rank_exist) { // Upper neighbor exists
         MPI_Recv(&(upper_bnd_recv[0]), (sub_N), MPI_DOUBLE, u_rank, 116, MPI_COMM_WORLD, &s);
         MPI_Send(&(upper_bnd_send[0]), (sub_N), MPI_DOUBLE, u_rank, 117, MPI_COMM_WORLD);
-      }
-      if (b_rank_exist) { // Left neighbor exists
-        MPI_Recv(&(lower_bnd_recv[0]), (sub_N), MPI_DOUBLE, b_rank, 115, MPI_COMM_WORLD, &s);
-        MPI_Send(&(lower_bnd_send[0]), (sub_N), MPI_DOUBLE, b_rank, 118, MPI_COMM_WORLD);
       }
     }
 
@@ -280,9 +278,6 @@ int main(int argc, char* argv[]) {
 
       }
     }
-  
-    std::cout<<"_________________________"<<std::endl;
-    showHeat(curr, sub_N, sub_N);
 
 #if DEBUG
     showHeat(curr, sub_N, sub_N);
@@ -299,7 +294,7 @@ int main(int argc, char* argv[]) {
   	// report time
     std::cerr<<elapsed_seconds.count()<<std::endl;
   }
-
+  
   MPI_Finalize();
   return 0;
 }
