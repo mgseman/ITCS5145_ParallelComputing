@@ -1,12 +1,22 @@
 #include <iostream>
 #include <chrono>
 
-
-void polynomial_expansion (float* poly, int degree,
+__global__ void polynomial_expansion (float* poly, int degree,
 			   int n, float* array) {
   //TODO: Write code to use the GPU here!
   //code should write the output back to array
 
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (idx < n) 
+  {
+    float out = 0.;
+    float xtothepowerof = 1.;
+    for (int i=0; i<=degree; ++i) {
+      out += xtothepowerof*poly[i];
+      xtothepowerof *= array[idx];
+    }
+    array[idx] = out;
+  }
 }
 
 
@@ -31,9 +41,27 @@ int main (int argc, char* argv[]) {
   
   std::chrono::time_point<std::chrono::system_clock> begin, end;
   begin = std::chrono::system_clock::now();
+
+  float *d_poly;
+  float *d_arr;
+  cudaMalloc((void **) &d_poly, (degree+1)*sizeof(float));
+  cudaMalloc((void **) &d_arr, n*sizeof(float));
+
+  // Copy input arrays onto GPU memory
+  cudaMemcpy(d_poly, poly, (degree+1)*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_arr, array, n*sizeof(float), cudaMemcpyHostToDevice);
+
+  // Perform Polynomial expansion on GPU
+  for (int iter = 0; iter<nbiter; ++iter) {
+    polynomial_expansion<<<(n+255)/256, 256>>>(d_poly, degree, n, d_arr);
+  }
   
-  for (int iter = 0; iter<nbiter; ++iter)
-    polynomial_expansion (poly, degree, n, array);
+  // Send array back to CPU memory
+  cudaMemcpy(array, d_arr, n*sizeof(float), cudaMemcpyDeviceToHost);
+
+  // Free CUDA memory
+  cudaFree(d_arr);
+  cudaFree(d_poly);
 
   end = std::chrono::system_clock::now();
   std::chrono::duration<double> totaltime = (end-begin)/nbiter;
@@ -44,7 +72,7 @@ int main (int argc, char* argv[]) {
     for (int i=0; i< n; ++i) {
       if (fabs(array[i]-(degree+1))>0.01) {
         correct = false;
-	ind = i;
+	      ind = i;
       }
     }
     if (!correct)
