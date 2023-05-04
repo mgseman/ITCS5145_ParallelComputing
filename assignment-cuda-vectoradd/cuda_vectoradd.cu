@@ -33,19 +33,19 @@ int main (int argc, char* argv[]) {
   float *d_in1;
   float *d_in2;
   float *d_out;
-  cudaMalloc((void **) &d_in1, n);
-  cudaMalloc((void **) &d_in2, n);
-  cudaMalloc((void **) &d_out, n);
+  cudaMalloc((void **) &d_in1, n*sizeof(float));
+  cudaMalloc((void **) &d_in2, n*sizeof(float));
+  cudaMalloc((void **) &d_out, n*sizeof(float));
 
   // Copy input arrays onto GPU memory
-  cudaMemcpy(d_in1, in1, n, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_in2, in2, n, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_in1, in1, n*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_in2, in2, n*sizeof(float), cudaMemcpyHostToDevice);
 
   // Perform vector addition on GPU
-  VecAdd<<<1, n>>>(d_in1, d_in2, d_out);
+  VecAdd<<<1, n*sizeof(float)>>>(d_in1, d_in2, d_out);
 
   // Copy output of vector addition onto CPU memory
-  cudaMemcpy(d_out, out, n, cudaMemcpyHostToDevice);
+  cudaMemcpy(out, d_out, n*sizeof(float), cudaMemcpyDeviceToHost);
   
   // Free GPU memory
   cudaFree(d_in1);
